@@ -13,16 +13,19 @@ Original file is located at
 # 01 — IMPORTS
 # ============================================================
 
+import os
+
 import pandas as pd
 import numpy as np
 
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
-from google.colab import userdata
-
 from t_tech.invest import Client
 from t_tech.invest import CandleInterval
+
+TOKEN = os.environ["T_SANDAPI"]
+BOT_TOKEN = os.environ["BOT_TOKEN"]
 
 print("Imports OK")
 
@@ -30,7 +33,7 @@ print("Imports OK")
 # 02 — T-INVEST API
 # ============================================================
 
-TOKEN = userdata.get("T-Sandapi")
+TOKEN = userdata.get("T_SANDAPI")
 
 if not TOKEN:
     raise RuntimeError(
