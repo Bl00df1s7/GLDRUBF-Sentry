@@ -10,7 +10,7 @@ jobs:
   run-notebook:
     runs-on: ubuntu-latest
     steps:
-      # 1. Скачиваем код репозитория (чтобы получить доступ к ноутбуку)
+      # 1. Скачиваем код репозитория
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -20,16 +20,19 @@ jobs:
         with:
           python-version: '3.11'
 
-      # 3. Устанавливаем зависимости (включая ipykernel для ядра)
+      # 3. Устанавливаем зависимости (включая ipykernel)
       - name: Install dependencies
         run: |
           pip install t-tech-investments --index-url https://opensource.tbank.ru/api/v4/projects/238/packages/pypi/simple
           pip install pandas numpy requests papermill nbconvert ipykernel
 
-      # 4. Регистрируем Jupyter Kernel (ИСПРАВЛЕНИЕ ОШИБКИ NoSuchKernel)
+      # 4. Регистрируем Jupyter Kernel (ИСПОЛЬЗУЕМ --sys-prefix)
       - name: Install and Register Jupyter Kernel
         run: |
-          python -m ipykernel install --user --name python3 --display-name "Python 3"
+          python -m ipykernel install --sys-prefix --name python3 --display-name "Python 3"
+          echo "=== Available Kernels ==="
+          jupyter kernelspec list
+          echo "========================="
 
       # 5. Запуск ноутбука через Papermill
       - name: Run notebook
