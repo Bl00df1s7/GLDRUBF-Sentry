@@ -1,0 +1,62 @@
+name: Run Gold Strategy (золото_в2.ipynb)
+
+on:
+  schedule:
+    # Запуск каждые 4 часа начиная с 03:05 МСК (00:05 UTC)
+    # 03:05, 07:05, 11:05, 15:05, 19:05, 23:05 МСК
+    # Ежедневно (фьючерсы торгуются и в выходные)
+    - cron: '5 0,4,8,12,16,20 * * *'
+  workflow_dispatch:
+
+jobs:
+  run-notebook:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install t-tech-investments --index-url https://opensource.tbank.ru/api/v4/projects/238/packages/pypi/simple
+          pip install pandas numpy requests papermill nbconvert
+
+      - name: Run notebook
+        env:
+          T_SANDAPI: ${{ secrets.T_SANDAPI }}
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+        run: |
+          python << 'EOF'
+          import os
+          import papermill as pm
+
+          token = os.environ.get('T_SANDAPI', '')
+          bot_token = os.environ.get('BOT_TOKEN', '')
+
+          if not token:
+              raise RuntimeError('Secret T-Sandapi not found')
+          if not bot_token:
+              raise RuntimeError('Secret BOT_TOKEN not found')
+
+          print(f"Token length: {len(token)}")
+          print(f"Bot token length: {len(bot_token)}")
+
+          pm.execute_notebook(
+              'zoloto_v2.ipynb',
+              'output_zoloto_v2.ipynb',
+              kernel_name='python3'
+          )
+          print('Notebook executed successfully')
+          EOF
+
+      - name: Upload output notebook
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: notebook-output
+          path: output_zoloto_v2.ipynb
+          retention-days: 7
