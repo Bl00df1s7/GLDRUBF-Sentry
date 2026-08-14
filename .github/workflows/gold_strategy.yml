@@ -12,6 +12,24 @@ jobs:
   run-notebook:
     runs-on: ubuntu-latest
     steps:
+      - name: Install Jupyter Kernel
+      - run: |
+          pip install ipykernel papermill
+          # Регистрируем ядро python3
+          python -m ipykernel install --user --name python3 --display-name "Python 3"
+      
+      - name: Run Notebook Execution
+        run: |
+          python << 'EOF'
+          # Ваш код запуска papermill
+          import papermill as pm
+          pm.execute_notebook(
+             'input.ipynb',
+             'output.ipynb',
+             kernel_name='python3'
+          )
+          EOF
+      
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -60,3 +78,5 @@ jobs:
           name: notebook-output
           path: output_zoloto_v2.ipynb
           retention-days: 7
+      
+      
