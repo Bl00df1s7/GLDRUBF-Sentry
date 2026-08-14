@@ -2,9 +2,10 @@ name: Run Gold Strategy (золото_в2.ipynb)
 
 on:
   schedule:
-    # Запуск каждый час в торговые часы Мосбиржи (07:00-19:00 UTC+3 = 04:00-16:00 UTC)
-    # Пн-Пт
-    - cron: '0 4-16 * * 1-5'
+    # Запуск каждые 4 часа начиная с 03:05 МСК (00:05 UTC)
+    # 03:05, 07:05, 11:05, 15:05, 19:05, 23:05 МСК
+    # Ежедневно (фьючерсы торгуются и в выходные)
+    - cron: '5 0,4,8,12,16,20 * * *'
   workflow_dispatch:
 
 jobs:
@@ -26,7 +27,7 @@ jobs:
 
       - name: Run notebook
         env:
-          T_SANDAPI: ${{ secrets.T-Sandapi }}
+          T_SANDAPI: ${{ secrets.T_SANDAPI }}
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
         run: |
           python << 'EOF'
