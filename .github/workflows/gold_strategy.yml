@@ -25,7 +25,7 @@ jobs:
 
       - name: Run strategy
         env:
-          T_SANDBOX: ${{ secrets.T_SANDBOX }}
+          T_SANDAPI: ${{ secrets.T_SANDAPI }}
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
