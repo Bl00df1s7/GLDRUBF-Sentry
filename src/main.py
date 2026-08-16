@@ -131,13 +131,15 @@ def main():
     
     # Format and send Telegram message
     print("\n📱 Sending status to Telegram...")
+    signal_time = datetime.now(timezone.utc)
     message = format_status_message(
         current_price=current_price,
         last_closed=last_closed,
         position_state=position_state,
         entry_signal=entry_signal,
         exit_signal=exit_signal,
-        action=action
+        action=action,
+        signal_time=signal_time
     )
     
     send_telegram_message(bot_token, chat_id, message)
