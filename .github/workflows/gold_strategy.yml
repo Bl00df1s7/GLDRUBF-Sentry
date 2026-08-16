@@ -1,73 +1,32 @@
-name: Run Gold Strategy (золото_в2.ipynb)
+name: Run Gold Strategy
 
 on:
   schedule:
-    # Запуск каждые 4 часа начиная с 03:05 МСК (00:05 UTC)
-    - cron: '1 3,7,11,15,19,23 * * *'
+    # Запуск каждые 4 часа начиная с 03:01 МСК (00:01 UTC)
+    - cron: '1 0,4,8,12,16,20 * * *'
   workflow_dispatch:
 
 jobs:
-  run-notebook:
+  run-strategy:
     runs-on: ubuntu-latest
     steps:
-      # 1. Скачиваем код репозитория
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Устанавливаем Python
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      # 3. Устанавливаем зависимости (включая ipykernel)
       - name: Install dependencies
         run: |
           pip install t-tech-investments --index-url https://opensource.tbank.ru/api/v4/projects/238/packages/pypi/simple
-          pip install pandas numpy requests papermill nbconvert ipykernel
+          pip install pandas numpy requests
 
-      # 4. Регистрируем Jupyter Kernel (ИСПОЛЬЗУЕМ --sys-prefix)
-      - name: Install and Register Jupyter Kernel
-        run: |
-          python -m ipykernel install --sys-prefix --name python3 --display-name "Python 3"
-          echo "=== Available Kernels ==="
-          jupyter kernelspec list
-          echo "========================="
-
-      # 5. Запуск ноутбука через Papermill
-      - name: Run notebook
+      - name: Run strategy
         env:
-          T_SANDAPI: ${{ secrets.T_SANDAPI }}
+          T_SANDBOX: ${{ secrets.T_SANDBOX }}
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          python << 'EOF'
-          import os
-          import papermill as pm
-          
-          token = os.environ.get('T_SANDAPI', '')
-          bot_token = os.environ.get('BOT_TOKEN', '')
-          
-          if not token:
-              raise RuntimeError('Secret T-Sandapi not found')
-          if not bot_token:
-              raise RuntimeError('Secret BOT_TOKEN not found')
-          
-          print(f"Token length: {len(token)}")
-          print(f"Bot token length: {len(bot_token)}")
-          
-          pm.execute_notebook(
-              'zoloto_v2.ipynb',
-              'output_zoloto_v2.ipynb',
-              kernel_name='python3'
-          )
-          print('Notebook executed successfully')
-          EOF
-
-      # 6. Загрузка результата
-      - name: Upload output notebook
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: notebook-output
-          path: output_zoloto_v2.ipynb
-          retention-days: 7
+          python -m src.main
