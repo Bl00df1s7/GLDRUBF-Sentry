@@ -44,12 +44,12 @@ def main():
     """Main entry point for the strategy."""
     
     # Validate required environment variables
-    token = os.environ.get("T_SANDBOX")
+    token = os.environ.get("T_SANDAPI")
     bot_token = os.environ.get("BOT_TOKEN")
     chat_id = os.environ.get("TELEGRAM_CHAT_ID")
     
     if not token:
-        raise RuntimeError("Secret T-SANDBOX not found")
+        raise RuntimeError("Secret T_SANDAPI not found")
     if not bot_token:
         raise RuntimeError("Secret BOT_TOKEN not found")
     if not chat_id:
