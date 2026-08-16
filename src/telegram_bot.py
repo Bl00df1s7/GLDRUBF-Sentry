@@ -50,7 +50,8 @@ def format_status_message(
     position_state: dict,
     entry_signal: str,
     exit_signal: str,
-    action: str
+    action: str,
+    signal_time=None
 ) -> str:
     """
     Format strategy status message for Telegram.
@@ -62,14 +63,19 @@ def format_status_message(
         entry_signal: Entry signal ("LONG", "SHORT", or None)
         exit_signal: Exit signal string or None
         action: Action to take
+        signal_time: Time when signal was generated (datetime)
         
     Returns:
         Formatted HTML message
     """
-    from datetime import timezone
+    from datetime import timezone, datetime
     
-    # Market info
-    closed_msk = last_closed["time"].astimezone(timezone.utc)
+    # Use provided signal time or current time
+    if signal_time is None:
+        signal_time = datetime.now(timezone.utc)
+    
+    # Market info - use signal time for display
+    signal_msk = signal_time.astimezone(timezone.utc)
     
     # Position block
     direction = position_state["direction"]
@@ -106,7 +112,7 @@ def format_status_message(
         "💰 <b>Рынок</b>\n"
         f"Цена:        <b>{fmt_price(current_price)}</b>\n"
         f"Закрытие 4H: {fmt_price(last_closed['close'])}\n"
-        f"Свеча:       {closed_msk.strftime('%d.%m.%Y %H:%M')} MSK\n"
+        f"Свеча:       {last_closed['time'].astimezone(timezone.utc).strftime('%d.%m.%Y %H:%M')} MSK\n"
         "\n"
         "📈 <b>Позиция</b>\n"
         f"{position_block}\n"
@@ -120,7 +126,7 @@ def format_status_message(
         "➡️ <b>Действие</b>\n"
         f"<b>{action}</b>\n"
         "\n"
-        f"⏱ {closed_msk.strftime('%H:%M:%S')} MSK"
+        f"⏱ {signal_msk.strftime('%H:%M:%S')} MSK"
     )
     
     return message
