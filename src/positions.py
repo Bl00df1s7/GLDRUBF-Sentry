@@ -25,104 +25,104 @@ def find_gldrubf_position(token: str, instrument) -> dict:
         accounts_response = services.users.get_accounts()
         accounts = accounts_response.accounts
     
-    if not accounts:
-        raise RuntimeError("Для этого токена не найдено ни одного счёта")
-    
-    print(f"Найдено счетов: {len(accounts)}\n")
-    
-    gldrubf_position = None
-    position_account_id = None
-    position_account_name = None
-    
-    # Normalize target ticker for comparison
-    target_ticker_normalized = TARGET_TICKER.upper()
-    # Also create base ticker without any suffix for flexible matching
-    target_ticker_base = target_ticker_normalized.split('_')[0]
-    
-    print(f"Searching for ticker: {target_ticker_normalized}")
-    print(f"Base ticker for matching: {target_ticker_base}\n")
-    
-    for account in accounts:
-        account_id = account.id
+        if not accounts:
+            raise RuntimeError("Для этого токена не найдено ни одного счёта")
         
-        print("=" * 60)
-        print(f"ACCOUNT: {account_id}")
-        print(f"NAME:    {account.name}")
-        print(f"TYPE:    {account.type}")
-        print(f"STATUS:  {account.status}\n")
+        print(f"Найдено счетов: {len(accounts)}\n")
         
-        try:
-            positions_response = services.operations.get_positions(
-                account_id=account_id
-            )
-        except Exception as e:
-            print(f"⚠️ Не удалось получить позиции: {e}")
-            print("Счёт пропускаем.\n")
-            continue
+        gldrubf_position = None
+        position_account_id = None
+        position_account_name = None
         
-        futures_positions = positions_response.futures
-        print(f"Futures positions: {len(futures_positions)}\n")
+        # Normalize target ticker for comparison
+        target_ticker_normalized = TARGET_TICKER.upper()
+        # Also create base ticker without any suffix for flexible matching
+        target_ticker_base = target_ticker_normalized.split('_')[0]
         
-        # Debug: print all futures positions
-        if len(futures_positions) > 0:
-            print("📋 All futures positions in this account:")
-            for pos in futures_positions:
-                pos_ticker = pos.ticker.upper()
-                pos_base = pos_ticker.split('_')[0]
-                match_exact = "✓ EXACT" if pos_ticker == target_ticker_normalized else ""
-                match_base = "✓ BASE" if pos_base == target_ticker_base else ""
-                matches = f"{match_exact} {match_base}".strip()
-                print(f"   - {pos.ticker} (balance: {pos.balance}, figi: {pos.figi}) {matches}")
-            print()
+        print(f"Searching for ticker: {target_ticker_normalized}")
+        print(f"Base ticker for matching: {target_ticker_base}\n")
         
-        # Search for GLDRUBF
-        for position in futures_positions:
-            position_ticker = position.ticker.upper()
+        for account in accounts:
+            account_id = account.id
             
-            # Try exact match first
-            if position_ticker != target_ticker_normalized:
-                # Try matching without suffix (e.g., GLDRUBF_TOM vs GLDRUBF)
-                base_ticker = position_ticker.split('_')[0]
-                if base_ticker != target_ticker_base:
-                    continue
+            print("=" * 60)
+            print(f"ACCOUNT: {account_id}")
+            print(f"NAME:    {account.name}")
+            print(f"TYPE:    {account.type}")
+            print(f"STATUS:  {account.status}\n")
             
-            balance = float(position.balance)
+            try:
+                positions_response = services.operations.get_positions(
+                    account_id=account_id
+                )
+            except Exception as e:
+                print(f"⚠️ Не удалось получить позиции: {e}")
+                print("Счёт пропускаем.\n")
+                continue
             
-            print(f"🎯 GLDRUBF FOUND in account {account_id}")
-            print(f"   Ticker:   {position.ticker}")
-            print(f"   Balance:  {balance}")
-            print(f"   Blocked:  {position.blocked}\n")
+            futures_positions = positions_response.futures
+            print(f"Futures positions: {len(futures_positions)}\n")
             
-            if balance != 0:
-                gldrubf_position = {
-                    "position": position,
-                    "account_id": account_id,
-                    "account_name": account.name,
-                    "balance": balance,
-                    "direction": "LONG" if balance > 0 else "SHORT",
-                }
+            # Debug: print all futures positions
+            if len(futures_positions) > 0:
+                print("📋 All futures positions in this account:")
+                for pos in futures_positions:
+                    pos_ticker = pos.ticker.upper()
+                    pos_base = pos_ticker.split('_')[0]
+                    match_exact = "✓ EXACT" if pos_ticker == target_ticker_normalized else ""
+                    match_base = "✓ BASE" if pos_base == target_ticker_base else ""
+                    matches = f"{match_exact} {match_base}".strip()
+                    print(f"   - {pos.ticker} (balance: {pos.balance}, figi: {pos.figi}) {matches}")
+                print()
+            
+            # Search for GLDRUBF - EXACT LOGIC FROM WORKING SCRIPT
+            for position in futures_positions:
+                position_ticker = position.ticker.upper()
                 
-                print(f"✅ ACTIVE POSITION: {gldrubf_position['direction']} × {balance}\n")
+                # Exact match check first (like old script)
+                if position_ticker != target_ticker_normalized:
+                    # Try matching without suffix (e.g., GLDRUBF_TOM vs GLDRUBF)
+                    base_ticker = position_ticker.split('_')[0]
+                    if base_ticker != target_ticker_base:
+                        continue
+                
+                balance = float(position.balance)
+                
+                print(f"🎯 GLDRUBF FOUND in account {account_id}")
+                print(f"   Ticker:   {position.ticker}")
+                print(f"   Balance:  {balance}")
+                print(f"   Blocked:  {position.blocked}\n")
+                
+                if balance != 0:
+                    gldrubf_position = {
+                        "position": position,
+                        "account_id": account_id,
+                        "account_name": account.name,
+                        "balance": balance,
+                        "direction": "LONG" if balance > 0 else "SHORT",
+                    }
+                    
+                    print(f"✅ ACTIVE POSITION: {gldrubf_position['direction']} × {balance}\n")
+                    break
+            
+            # Stop searching if position found
+            if gldrubf_position is not None:
                 break
         
-        # Stop searching if position found
-        if gldrubf_position is not None:
-            break
-    
-    print("=" * 60)
-    print("FINAL POSITION STATE")
-    print("=" * 60)
-    
-    if gldrubf_position is None:
-        print("⚪ FINAL: NO GLDRUBF POSITION\n")
-    else:
-        pos = gldrubf_position
-        print(f"Account:     {pos['account_name']}")
-        print(f"Account ID:  {pos['account_id']}")
-        print(f"Direction:   {pos['direction']}")
-        print(f"Quantity:    {pos['balance']}\n")
-    
-    return gldrubf_position
+        print("=" * 60)
+        print("FINAL POSITION STATE")
+        print("=" * 60)
+        
+        if gldrubf_position is None:
+            print("⚪ FINAL: NO GLDRUBF POSITION\n")
+        else:
+            pos = gldrubf_position
+            print(f"Account:     {pos['account_name']}")
+            print(f"Account ID:  {pos['account_id']}")
+            print(f"Direction:   {pos['direction']}")
+            print(f"Quantity:    {pos['balance']}\n")
+        
+        return gldrubf_position
 
 
 def get_position_state(
