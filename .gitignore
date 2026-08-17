@@ -4,23 +4,25 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
-
-# Environment
-.venv/
+.Python
+env/
 venv/
+.venv/
+.ENV
+.ENV.*
 .env
-.env.local
-*.env.*
-
-# Logs and temp files
+.env.*
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
 *.log
-*.tmp
-
-# Editors
-.vscode/
-.idea/
-
-# Build artifacts
-build/
-dist/
+.git/modules/
+.DS_Store
+Thumbs.db
 ```
