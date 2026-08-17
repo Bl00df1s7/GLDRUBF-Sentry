@@ -2,7 +2,7 @@
 Instrument discovery and management.
 """
 
-from t_tech.invest import Client
+from t_tech.invest import Client, CandleInterval
 
 
 def get_gldrubf_instrument(token: str) -> dict:
@@ -20,8 +20,8 @@ def get_gldrubf_instrument(token: str) -> dict:
     """
     from config.settings import TARGET_TICKER
     
-    with Client(token) as services:
-        response = services.instruments.futures()
+    with Client(token) as client:
+        response = client.instruments.futures()
         futures = response.instruments
     
     instrument = None

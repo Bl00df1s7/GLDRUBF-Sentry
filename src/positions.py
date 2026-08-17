@@ -21,26 +21,27 @@ def find_gldrubf_position(token: str, instrument) -> dict:
     """
     print("\n=== SEARCHING FOR GLDRUBF POSITION ===\n")
     
-    with Client(token) as services:
-        accounts_response = services.users.get_accounts()
-        accounts = accounts_response.accounts
+    gldrubf_position = None
+    position_account_id = None
+    position_account_name = None
     
+    # Normalize target ticker for comparison
+    target_ticker_normalized = TARGET_TICKER.upper()
+    # Also create base ticker without any suffix for flexible matching
+    target_ticker_base = target_ticker_normalized.split('_')[0]
+    
+    print(f"Searching for ticker: {target_ticker_normalized}")
+    print(f"Base ticker for matching: {target_ticker_base}\n")
+    
+    # Keep context open for all operations
+    with Client(token) as client:
+        accounts_response = client.users.get_accounts()
+        accounts = accounts_response.accounts
+        
         if not accounts:
             raise RuntimeError("Для этого токена не найдено ни одного счёта")
         
         print(f"Найдено счетов: {len(accounts)}\n")
-        
-        gldrubf_position = None
-        position_account_id = None
-        position_account_name = None
-        
-        # Normalize target ticker for comparison
-        target_ticker_normalized = TARGET_TICKER.upper()
-        # Also create base ticker without any suffix for flexible matching
-        target_ticker_base = target_ticker_normalized.split('_')[0]
-        
-        print(f"Searching for ticker: {target_ticker_normalized}")
-        print(f"Base ticker for matching: {target_ticker_base}\n")
         
         for account in accounts:
             account_id = account.id
@@ -52,7 +53,7 @@ def find_gldrubf_position(token: str, instrument) -> dict:
             print(f"STATUS:  {account.status}\n")
             
             try:
-                positions_response = services.operations.get_positions(
+                positions_response = client.operations.get_positions(
                     account_id=account_id
                 )
             except Exception as e:
@@ -108,21 +109,21 @@ def find_gldrubf_position(token: str, instrument) -> dict:
             # Stop searching if position found
             if gldrubf_position is not None:
                 break
-        
-        print("=" * 60)
-        print("FINAL POSITION STATE")
-        print("=" * 60)
-        
-        if gldrubf_position is None:
-            print("⚪ FINAL: NO GLDRUBF POSITION\n")
-        else:
-            pos = gldrubf_position
-            print(f"Account:     {pos['account_name']}")
-            print(f"Account ID:  {pos['account_id']}")
-            print(f"Direction:   {pos['direction']}")
-            print(f"Quantity:    {pos['balance']}\n")
-        
-        return gldrubf_position
+    
+    print("=" * 60)
+    print("FINAL POSITION STATE")
+    print("=" * 60)
+    
+    if gldrubf_position is None:
+        print("⚪ FINAL: NO GLDRUBF POSITION\n")
+    else:
+        pos = gldrubf_position
+        print(f"Account:     {pos['account_name']}")
+        print(f"Account ID:  {pos['account_id']}")
+        print(f"Direction:   {pos['direction']}")
+        print(f"Quantity:    {pos['balance']}\n")
+    
+    return gldrubf_position
 
 
 def get_position_state(
@@ -163,14 +164,14 @@ def get_position_state(
     
     entry_price = np.nan
     
-    with Client(token) as services:
-        portfolio = services.operations.get_portfolio(account_id=account_id)
-    
-    for portfolio_pos in portfolio.positions:
-        if portfolio_pos.figi == figi:
-            from src.market_data import quotation_to_float
-            entry_price = quotation_to_float(portfolio_pos.average_position_price)
-            break
+    with Client(token) as client:
+        portfolio = client.operations.get_portfolio(account_id=account_id)
+        
+        for portfolio_pos in portfolio.positions:
+            if portfolio_pos.figi == figi:
+                from src.market_data import quotation_to_float
+                entry_price = quotation_to_float(portfolio_pos.average_position_price)
+                break
     
     if np.isnan(entry_price):
         print("⚠️ Не удалось получить среднюю цену позиции")
