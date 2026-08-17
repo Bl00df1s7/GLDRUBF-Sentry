@@ -37,7 +37,16 @@ def get_last_closed_candle(df):
     if closed_candidates.empty:
         raise RuntimeError("No closed 4H candles found")
     
-    return closed_candidates.iloc[-1]
+    last_closed = closed_candidates.iloc[-1]
+    
+    # Debug: print candle times
+    print(f"\n🕐 TIME DEBUG:")
+    print(f"   Now (UTC):           {now_utc.strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"   Last candle time:    {last_closed['time'].strftime('%Y-%m-%d %H:%M:%S')} UTC")
+    print(f"   Candle close time:   {last_closed['candle_close_time'].strftime('%Y-%m-%d %H:%M:%S')} UTC")
+    print(f"   Candle close (MSK):  {(last_closed['candle_close_time'] + timedelta(hours=3)).strftime('%Y-%m-%d %H:%M:%S')} MSK")
+    
+    return last_closed
 
 
 def main():
@@ -91,7 +100,8 @@ def main():
     print(f"   Last closed: {last_closed['close']:.2f}")
     
     # Find existing position
-    print("\n🔍 Searching for GLDRUBF position...")
+    print(f"\n🔍 Searching for GLDRUBF position...")
+    print(f"   Last candle time (UTC): {last_closed['time'].strftime('%Y-%m-%d %H:%M:%S')}")
     position_info = find_gldrubf_position(token, instrument)
     
     # Get full position state with levels
