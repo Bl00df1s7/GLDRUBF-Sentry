@@ -68,14 +68,19 @@ def format_status_message(
     Returns:
         Formatted HTML message
     """
-    from datetime import timezone, datetime
+    from datetime import timezone, datetime, timedelta
+    
+    # Moscow timezone (UTC+3)
+    msk_tz = timezone(timedelta(hours=3))
     
     # Use provided signal time or current time
     if signal_time is None:
-        signal_time = datetime.now(timezone.utc)
+        signal_time = datetime.now(msk_tz)
+    else:
+        signal_time = signal_time.astimezone(msk_tz)
     
-    # Market info - use signal time for display
-    signal_msk = signal_time.astimezone(timezone.utc)
+    # Convert candle time to MSK for display
+    candle_time_msk = last_closed["time"].astimezone(msk_tz)
     
     # Position block
     direction = position_state["direction"]
@@ -112,7 +117,7 @@ def format_status_message(
         "💰 <b>Рынок</b>\n"
         f"Цена:        <b>{fmt_price(current_price)}</b>\n"
         f"Закрытие 4H: {fmt_price(last_closed['close'])}\n"
-        f"Свеча:       {last_closed['time'].astimezone(timezone.utc).strftime('%d.%m.%Y %H:%M')} MSK\n"
+        f"Свеча:       {candle_time_msk.strftime('%d.%m.%Y %H:%M')} MSK\n"
         "\n"
         "📈 <b>Позиция</b>\n"
         f"{position_block}\n"
@@ -126,7 +131,7 @@ def format_status_message(
         "➡️ <b>Действие</b>\n"
         f"<b>{action}</b>\n"
         "\n"
-        f"⏱ {signal_msk.strftime('%H:%M:%S')} MSK"
+        f"⏱ {signal_time.strftime('%H:%M:%S')} MSK"
     )
     
     return message
