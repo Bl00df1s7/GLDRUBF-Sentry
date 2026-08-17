@@ -36,7 +36,11 @@ def find_gldrubf_position(token: str, instrument) -> dict:
     
     # Normalize target ticker for comparison
     target_ticker_normalized = TARGET_TICKER.upper()
-    print(f"Searching for ticker: {target_ticker_normalized}\n")
+    # Also create base ticker without any suffix for flexible matching
+    target_ticker_base = target_ticker_normalized.split('_')[0]
+    
+    print(f"Searching for ticker: {target_ticker_normalized}")
+    print(f"Base ticker for matching: {target_ticker_base}\n")
     
     for account in accounts:
         account_id = account.id
@@ -63,7 +67,12 @@ def find_gldrubf_position(token: str, instrument) -> dict:
         if len(futures_positions) > 0:
             print("📋 All futures positions in this account:")
             for pos in futures_positions:
-                print(f"   - {pos.ticker} (balance: {pos.balance}, figi: {pos.figi})")
+                pos_ticker = pos.ticker.upper()
+                pos_base = pos_ticker.split('_')[0]
+                match_exact = "✓ EXACT" if pos_ticker == target_ticker_normalized else ""
+                match_base = "✓ BASE" if pos_base == target_ticker_base else ""
+                matches = f"{match_exact} {match_base}".strip()
+                print(f"   - {pos.ticker} (balance: {pos.balance}, figi: {pos.figi}) {matches}")
             print()
         
         # Search for GLDRUBF
@@ -74,7 +83,7 @@ def find_gldrubf_position(token: str, instrument) -> dict:
             if position_ticker != target_ticker_normalized:
                 # Try matching without suffix (e.g., GLDRUBF_TOM vs GLDRUBF)
                 base_ticker = position_ticker.split('_')[0]
-                if base_ticker != target_ticker_normalized:
+                if base_ticker != target_ticker_base:
                     continue
             
             balance = float(position.balance)
