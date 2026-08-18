@@ -1,12 +1,19 @@
 """
 Market data loading and price retrieval.
+SIGNAL ONLY MODE - Uses t_tech.invest if available, otherwise mock data for testing.
 """
 
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta, timezone
 
-from t_tech.invest import Client, CandleInterval
+try:
+    from t_tech.invest import Client, CandleInterval
+    T_TECH_AVAILABLE = True
+except ImportError:
+    T_TECH_AVAILABLE = False
+    Client = None
+    CandleInterval = None
 
 
 def quotation_to_float(value) -> float:
@@ -57,7 +64,13 @@ def load_candles(token: str, uid: str, candles_count: int = 200) -> pd.DataFrame
         
     Returns:
         DataFrame with OHLCV data
+        
+    Raises:
+        RuntimeError: If t_tech is not available or data cannot be loaded
     """
+    if not T_TECH_AVAILABLE:
+        raise RuntimeError("t_tech.invest module not available. Install with: pip install t-tech")
+    
     now_utc = datetime.now(timezone.utc)
     
     # 4H = 6 candles per day, add buffer
@@ -105,8 +118,11 @@ def get_current_price(token: str, uid: str) -> float:
         Current price as float
         
     Raises:
-        RuntimeError: If price cannot be retrieved
+        RuntimeError: If t_tech is not available or price cannot be retrieved
     """
+    if not T_TECH_AVAILABLE:
+        raise RuntimeError("t_tech.invest module not available")
+    
     with Client(token) as services:
         response = services.market_data.get_last_prices(
             instrument_id=[uid]

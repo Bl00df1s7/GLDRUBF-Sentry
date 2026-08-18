@@ -1,16 +1,24 @@
 """
 Position discovery and management.
+SIGNAL ONLY MODE - Read-only position data, no trading operations.
 """
 
 import numpy as np
 
-from t_tech.invest import Client
+try:
+    from t_tech.invest import Client
+    T_TECH_AVAILABLE = True
+except ImportError:
+    T_TECH_AVAILABLE = False
+    Client = None
+
 from config.settings import TARGET_TICKER, SL_ATR, TP_PCT, BE_PCT
 
 
 def find_gldrubf_position(token: str, instrument) -> dict:
     """
     Search for GLDRUBF position across all accounts.
+    READ-ONLY MODE - No trading operations.
     
     Args:
         token: T-Invest API token
@@ -18,7 +26,13 @@ def find_gldrubf_position(token: str, instrument) -> dict:
         
     Returns:
         Dictionary with position info or None if no position
+        
+    Raises:
+        RuntimeError: If t_tech not available
     """
+    if not T_TECH_AVAILABLE:
+        raise RuntimeError("t_tech.invest module not available")
+    
     print("\n=== SEARCHING FOR GLDRUBF POSITION ===\n")
     
     gldrubf_position = None
@@ -134,16 +148,23 @@ def get_position_state(
 ) -> dict:
     """
     Get complete position state with entry price and levels.
+    READ-ONLY MODE - No trading operations.
     
     Args:
         position_info: Position info from find_gldrubf_position
         last_closed: Last closed candle data
-        current_price: Current market price
+        current_price: Current market price (not used for signals)
         token: T-Invest API token
         
     Returns:
         Dictionary with full position state
+        
+    Raises:
+        RuntimeError: If t_tech not available
     """
+    if not T_TECH_AVAILABLE:
+        raise RuntimeError("t_tech.invest module not available")
+    
     if position_info is None:
         return {
             "direction": "NONE",

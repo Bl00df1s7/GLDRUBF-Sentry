@@ -1,8 +1,15 @@
 """
 Instrument discovery and management.
+SIGNAL ONLY MODE - Uses t_tech.invest if available.
 """
 
-from t_tech.invest import Client, CandleInterval
+try:
+    from t_tech.invest import Client, CandleInterval
+    T_TECH_AVAILABLE = True
+except ImportError:
+    T_TECH_AVAILABLE = False
+    Client = None
+    CandleInterval = None
 
 
 def get_gldrubf_instrument(token: str) -> dict:
@@ -16,9 +23,12 @@ def get_gldrubf_instrument(token: str) -> dict:
         Instrument object with uid, figi, ticker, etc.
         
     Raises:
-        RuntimeError: If instrument not found
+        RuntimeError: If t_tech not available or instrument not found
     """
     from config.settings import TARGET_TICKER
+    
+    if not T_TECH_AVAILABLE:
+        raise RuntimeError("t_tech.invest module not available. Install with: pip install t-tech")
     
     with Client(token) as client:
         response = client.instruments.futures()
