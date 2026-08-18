@@ -23,3 +23,6 @@ SAR_MAX = 0.20
 
 # Target instrument
 TARGET_TICKER = "GLDRUBF"
+
+# Telegram settings
+TELEGRAM_DEBUG_MODE = False  # Show technical debug info in messages
