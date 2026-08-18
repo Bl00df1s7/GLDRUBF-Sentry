@@ -17,10 +17,10 @@
 ├── config/                   # Конфигурация
 │   ├── __init__.py
 │   └── settings.py          # Параметры стратегии
-├── bot.py                    # Telegram bot для запуска по команде
+├── bot.py                    # Telegram-бот для ручного запуска расчёта
 ├── .github/workflows/        # GitHub Actions workflows
 │   ├── gold_strategy.yml    # Запуск стратегии по расписанию
-│   └── telegram_bot.yml     # Bot workflow
+│   └── telegram_bot.yml     # Workflow для бота
 ├── .gitignore
 └── README.md
 ```
@@ -37,13 +37,15 @@ pip install pandas numpy requests
 Необходимо настроить следующие GitHub Secrets:
 
 - `T_SANDBOX` - токен T-Invest API (sandbox)
-- `BOT_TOKEN` - токен Telegram бота
-- `TELEGRAM_CHAT_ID` - ID чата для уведомлений
-- `GH_TRIGGER_TOKEN` - токен для триггера workflow (опционально)
+- `BOT_TOKEN` - токен Telegram бота (для уведомлений и для bot.py)
+- `TELEGRAM_CHAT_ID` - ID чата для уведомлений от стратегии
+- `GH_TRIGGER_TOKEN` - токен GitHub с правами на запуск workflows (для bot.py)
+- `GITHUB_OWNER` - владелец репозитория (для bot.py)
+- `GITHUB_REPO` - имя репозитория (для bot.py)
 
 ## Запуск
 
-### Локальный запуск
+### Локальный запуск стратегии
 
 ```bash
 export T_SANDBOX="your_token"
@@ -53,7 +55,7 @@ export TELEGRAM_CHAT_ID="your_chat_id"
 python -m src.main
 ```
 
-### Автоматический запуск
+### Автоматический запуск стратегии
 
 Стратегия запускается автоматически каждые 4 часа через GitHub Actions:
 - 03:01 МСК
@@ -62,6 +64,27 @@ python -m src.main
 - 15:01 МСК
 - 19:01 МСК
 - 23:01 МСК
+
+### Запуск Telegram-бота (bot.py)
+
+Бот позволяет вручную запустить расчёт сигнала по команде `/signal`:
+
+```bash
+export BOT_TOKEN="your_bot_token"
+export GH_TRIGGER_TOKEN="your_github_token"
+export GITHUB_OWNER="your_github_username"
+export GITHUB_REPO="your_repo_name"
+
+python bot.py
+```
+
+**Команды бота:**
+- `/signal` - запускает workflow расчёта сигнала стратегии
+
+После получения команды бот:
+1. Отправляет сообщение «⏳ Запускаю расчёт сигнала...»
+2. Вызывает GitHub workflow `gold_strategy.yml`
+3. Сообщает об успешном запуске или ошибке
 
 ## Параметры стратегии
 
