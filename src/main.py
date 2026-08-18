@@ -112,10 +112,8 @@ def main():
         token
     )
     
-    # Check for entry signal (if no position)
-    entry_signal = None
-    if position_state["direction"] == "NONE":
-        entry_signal = check_entry_signal(last_closed, current_price)
+    # Check for entry signal (always check, regardless of position)
+    entry_signal = check_entry_signal(last_closed, current_price)
     
     # Check for exit conditions (if has position)
     exit_signal = None

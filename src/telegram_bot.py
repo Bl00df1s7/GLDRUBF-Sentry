@@ -97,21 +97,20 @@ def format_status_message(
             f"BE:          {fmt_price(position_state['be_trigger'])}"
         )
     
-    # Signal block
-    if direction == "NONE":
-        # No position - show entry signal
-        if entry_signal == "LONG":
-            signal_block = "🟢 <b>LONG</b>"
-        elif entry_signal == "SHORT":
-            signal_block = "🔴 <b>SHORT</b>"
-        else:
-            signal_block = "⚪ Нет сигнала"
+    # Signal block - always show current strategy signal
+    if entry_signal == "LONG":
+        signal_block = "🟢 <b>LONG</b>"
+    elif entry_signal == "SHORT":
+        signal_block = "🔴 <b>SHORT</b>"
     else:
-        # Has position - show exit signal or hold
+        signal_block = "⚪ Нет сигнала"
+    
+    # If position exists, also show exit status
+    if direction != "NONE":
         if exit_signal:
-            signal_block = exit_signal
+            signal_block = f"{signal_block} → {exit_signal}"
         else:
-            signal_block = "⏳ Удерживаем позицию"
+            signal_block = f"{signal_block} · ⏳ Держим"
     
     # SAR block
     sar_trend = "LONG" if last_closed["sar_trend"] == 1 else "SHORT"
