@@ -98,12 +98,20 @@ def format_status_message(
         )
     
     # Signal block
-    if entry_signal == "LONG":
-        signal_block = "🟢 <b>LONG</b>"
-    elif entry_signal == "SHORT":
-        signal_block = "🔴 <b>SHORT</b>"
+    if direction == "NONE":
+        # No position - show entry signal
+        if entry_signal == "LONG":
+            signal_block = "🟢 <b>LONG</b>"
+        elif entry_signal == "SHORT":
+            signal_block = "🔴 <b>SHORT</b>"
+        else:
+            signal_block = "⚪ Нет сигнала"
     else:
-        signal_block = "⚪ Нет сигнала"
+        # Has position - show exit signal or hold
+        if exit_signal:
+            signal_block = exit_signal
+        else:
+            signal_block = "⏳ Удерживаем позицию"
     
     # SAR block
     sar_trend = "LONG" if last_closed["sar_trend"] == 1 else "SHORT"
