@@ -381,7 +381,10 @@ def main():
     # Format and send Telegram message
     print("\n📱 Sending status to Telegram...")
     
-    message = format_status_message_v2(
+    # Use debug mode from settings
+    from config.settings import TELEGRAM_DEBUG_MODE
+    
+    message = format_status_message(
         last_closed=last_closed,
         df=df,
         position_state=position_state,
@@ -389,6 +392,7 @@ def main():
         exit_signal=exit_signal,
         action=action,
         warnings=warnings,
+        debug_mode=TELEGRAM_DEBUG_MODE,
     )
     
     send_telegram_message(bot_token, chat_id, message)
@@ -408,140 +412,6 @@ def main():
     
     print("\n✅ Strategy execution completed (SIGNAL ONLY)")
 
-
-def fmt_price(value) -> str:
-    """Format price with space as thousand separator."""
-    if value is None or (isinstance(value, float) and np.isnan(value)):
-        return "N/A"
-    return f"{float(value):,.2f}".replace(",", " ")
-
-
-def format_status_message_v2(
-    last_closed: dict,
-    df: pd.DataFrame,
-    position_state: dict,
-    entry_signal: str,
-    exit_signal: str,
-    action: str,
-    warnings: list = None,
-) -> str:
-    """
-    Format strategy status message for Telegram - TECHNICAL ONLY.
-    No macro, no trading commands.
-    """
-    from datetime import timezone, timedelta
-    
-    warnings = warnings or []
-    
-    # Moscow timezone (UTC+3)
-    msk_tz = timezone(timedelta(hours=3))
-    
-    # Convert candle time to MSK for display
-    candle_time = last_closed.get("time")
-    if candle_time:
-        candle_time_msk = candle_time.astimezone(msk_tz)
-        candle_time_str = candle_time_msk.strftime("%Y-%m-%d %H:%M") + " UTC"
-    else:
-        candle_time_str = "Unknown"
-    
-    # Get indicator values
-    donchian_upper = last_closed.get("donchian_upper")
-    donchian_lower = last_closed.get("donchian_lower")
-    atr = last_closed.get("atr")
-    sar_value = last_closed.get("sar")
-    sar_trend_int = last_closed.get("sar_trend", 1)
-    sar_reversal_up = last_closed.get("sar_reversal_up", False)
-    sar_reversal_down = last_closed.get("sar_reversal_down", False)
-    
-    sar_trend_str = "UP" if sar_trend_int == 1 else "DOWN" if sar_trend_int == -1 else "UNKNOWN"
-    
-    # Position block
-    direction = position_state.get("direction", "NONE")
-    
-    if direction == "NONE":
-        position_block = "⚪ NONE"
-    else:
-        pos_icon = "🟢" if direction == "LONG" else "🔴"
-        position_block = (
-            f"{pos_icon} {direction}\n"
-            f"   Entry: {fmt_price(position_state.get('entry_price'))}\n"
-            f"   SL: {fmt_price(position_state.get('sl_price'))}\n"
-            f"   TP: {fmt_price(position_state.get('tp_price'))}\n"
-            f"   BE trigger: {fmt_price(position_state.get('be_trigger'))}"
-        )
-    
-    # Entry signal block
-    if entry_signal == "LONG":
-        entry_block = "🟢 LONG"
-    elif entry_signal == "SHORT":
-        entry_block = "🔴 SHORT"
-    else:
-        entry_block = "⚪ None"
-    
-    # Exit signal block
-    if exit_signal:
-        exit_block = exit_signal
-    else:
-        exit_block = "None"
-    
-    # Hypothetical levels (if no position)
-    hypothetical_block = ""
-    if direction == "NONE" and entry_signal:
-        close_price = last_closed.get("close", 0)
-        atr_val = float(atr) if atr and not pd.isna(atr) else 0
-        
-        if entry_signal == "LONG":
-            hyp_entry = close_price
-            hyp_sl = close_price - atr_val * 3.0 if atr_val > 0 else None
-            hyp_tp = close_price * 1.07
-            hyp_be = close_price * 1.02
-        else:  # SHORT
-            hyp_entry = close_price
-            hyp_sl = close_price + atr_val * 3.0 if atr_val > 0 else None
-            hyp_tp = close_price * 0.93
-            hyp_be = close_price * 0.98
-        
-        hypothetical_block = (
-            "\nГипотетические уровни:\n"
-            f"   Entry: {fmt_price(hyp_entry)}\n"
-            f"   SL: {fmt_price(hyp_sl)}\n"
-            f"   TP: {fmt_price(hyp_tp)}\n"
-            f"   BE trigger: {fmt_price(hyp_be)}"
-        )
-    
-    # Warnings block
-    warnings_block = ""
-    if warnings:
-        warnings_block = "\n\n⚠️ Warnings:\n" + "\n".join(f"   - {w}" for w in warnings)
-    
-    # Build message
-    message = (
-        f"🟢 GLDRUBF · 4H · SIGNAL ONLY\n"
-        f"\n"
-        f"🕐 Свеча закрыта: {candle_time_str}\n"
-        f"Close: {fmt_price(last_closed.get('close'))}\n"
-        f"\n"
-        f"📊 Indicators:\n"
-        f"   Donchian upper: {fmt_price(donchian_upper)}\n"
-        f"   Donchian lower: {fmt_price(donchian_lower)}\n"
-        f"   ATR: {fmt_price(atr)}\n"
-        f"   SAR: {sar_trend_str} ({fmt_price(sar_value)})\n"
-        f"   SAR reversal: {'Up' if sar_reversal_up else 'Down' if sar_reversal_down else 'False'}\n"
-        f"\n"
-        f"📈 Позиция:\n"
-        f"{position_block}\n"
-        f"\n"
-        f"🎯 Signals:\n"
-        f"   Entry: {entry_block}\n"
-        f"   Exit: {exit_block}\n"
-        f"{hypothetical_block}"
-        f"\n"
-        f"➡️ Action: {action}\n"
-        f"\n"
-        f"ℹ️ Режим: ручной, ордера не отправляются.{warnings_block}"
-    )
-    
-    return message
 
 
 if __name__ == "__main__":
